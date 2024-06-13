@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./project/backend
+    ports:
+      - "3000:3000"  # Backend service port mapping
+    environment:
+      NODE_ENV: production  # Ensure backend runs in production mode
+      DB_HOST: maxscale  # Connect to MaxScale for database load balancing
+      DB_PORT: 3306
+      DB_USER: your_database_user
+      DB_PASSWORD: your_database_password
+      DB_NAME: your_database_name
+      OIDC_ISSUER_URL: http://keycloak:8080/realms/myrealm  # Keycloak realm URL
+      OIDC_CLIENT_ID: backend-client  # Client ID for the backend
+      OIDC_CLIENT_SECRET: your_client_secret  # Client secret for the backend
+    networks:
+      - webnet
+    depends_on:
+      - maxscale
+      - keycloak  # Ensure Keycloak starts before the backend
+
+  frontend:
+    build:
+      context: ./project/frontend
+    ports:
+      - "8080:80"  # Frontend service port mapping
+    environment:
+      NODE_ENV: production  # Ensure frontend runs in production mode
+      REACT_APP_OIDC_ISSUER: http://keycloak:8080/realms/myrealm  # Keycloak realm URL
+      REACT_APP_OIDC_CLIENT_ID: frontend-client  # Client ID for the frontend
+    networks:
+      - webnet
+
+  database1:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: your_database_name
+      MYSQL_USER: your_database_user
+      MYSQL_PASSWORD: your_database_password
+    volumes:
+      - db1-data:/var/lib/mysql
+    networks:
+      - webnet
+    ports:
+      - "3307:3306"
+
+  database2:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: your_database_name
+      MYSQL_USER: your_database_user
+      MYSQL_PASSWORD: your_database_password
+    volumes:
+      - db2-data:/var/lib/mysql
+    networks:
+      - webnet
+    ports:
+      - "3308:3306"
+
+  database3:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: your_database_name
+      MYSQL_USER: your_database_user
+      MYSQL_PASSWORD: your_database_password
+    volumes:
+      - db3-data:/var/lib/mysql
+    networks:
+      - webnet
+    ports:
+      - "3309:3306"
+
+  maxscale:
+    image: mariadb/maxscale:latest
+    ports:
+      - "3310:3306"  # MaxScale service port mapping
+    volumes:
+      - ./maxscale.cnf:/etc/maxscale.cnf  # Configuration for MaxScale
+    networks:
+      - webnet
+    depends_on:
+      - database1
+      - database2
+      - database3  # Ensure databases start before MaxScale
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - DB_VENDOR=h2
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: ["start-dev"]
+    ports:
+      - "8081:8080"  # Keycloak service port mapping
+    volumes:
+      - ./keycloak-data:/opt/keycloak/data
+    networks:
+      - webnet
+
+networks:
+  webnet:
+
+volumes:
+  db1-data:
+  db2-data:
+  db3-data:

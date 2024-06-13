@@ -1,0 +1,42 @@
+[maxscale]
+threads=2  # Number of threads to be used by MaxScale
+
+[MySQL Monitor]
+type=monitor
+module=mysqlmon
+servers=server1,server2,server3
+user=your_database_user  # This user should have monitoring privileges on the MariaDB servers
+password=your_database_password  # Ensure this password matches what is set in the MariaDB environment variables
+monitor_interval=2000  # Monitoring interval in milliseconds
+
+[Read-Write Service]
+type=service
+router=readwritesplit
+servers=server1,server2,server3
+user=your_database_user  # This user should have read-write privileges on the databases
+password=your_database_password  # Ensure this password matches what is set in the MariaDB environment variables
+max_slave_connections=100%  # Allow up to 100% of slave connections to be used
+
+[Read-Write Listener]
+type=listener
+service=Read-Write Service
+protocol=MariaDBClient
+port=3306  # This is the internal port MaxScale will listen on
+
+[server1]
+type=server
+address=database1  # Name or IP of the first MariaDB server in your Docker network
+port=3307  # Internal port of database1 in the Docker network
+protocol=MariaDBBackend
+
+[server2]
+type=server
+address=database2  # Name or IP of the second MariaDB server in your Docker network
+port=3308  # Internal port of database2 in the Docker network
+protocol=MariaDBBackend
+
+[server3]
+type=server
+address=database3  # Name или IP на третия MariaDB сървър във вашата Docker мрежа
+port=3309  # Вътрешен порт на database3 в Docker мрежата
+protocol=MariaDBBackend
