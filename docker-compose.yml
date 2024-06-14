@@ -1,36 +1,36 @@
-version: '3.8'
+version: '3.9'
 
 services:
   backend:
     build:
       context: ./project/backend
     ports:
-      - "3000:3000"  # Backend service port mapping
+      - "3000:3000"
     environment:
-      NODE_ENV: production  # Ensure backend runs in production mode
-      DB_HOST: maxscale  # Connect to MaxScale for database load balancing
+      NODE_ENV: production
+      DB_HOST: maxscale
       DB_PORT: 3306
       DB_USER: your_database_user
       DB_PASSWORD: your_database_password
       DB_NAME: your_database_name
-      OIDC_ISSUER_URL: http://keycloak:8080/realms/myrealm  # Keycloak realm URL
-      OIDC_CLIENT_ID: backend-client  # Client ID for the backend
-      OIDC_CLIENT_SECRET: your_client_secret  # Client secret for the backend
+      OIDC_ISSUER_URL: http://keycloak:8080/realms/myrealm
+      OIDC_CLIENT_ID: backend-client
+      OIDC_CLIENT_SECRET: your_client_secret
     networks:
       - webnet
     depends_on:
       - maxscale
-      - keycloak  # Ensure Keycloak starts before the backend
+      - keycloak
 
   frontend:
     build:
       context: ./project/frontend
     ports:
-      - "8080:80"  # Frontend service port mapping
+      - "8080:80"
     environment:
-      NODE_ENV: production  # Ensure frontend runs in production mode
-      REACT_APP_OIDC_ISSUER: http://keycloak:8080/realms/myrealm  # Keycloak realm URL
-      REACT_APP_OIDC_CLIENT_ID: frontend-client  # Client ID for the frontend
+      NODE_ENV: production
+      REACT_APP_OIDC_ISSUER: http://keycloak:8080/realms/myrealm
+      REACT_APP_OIDC_CLIENT_ID: frontend-client
     networks:
       - webnet
 
@@ -44,6 +44,7 @@ services:
       MYSQL_PASSWORD: your_database_password
     volumes:
       - db1-data:/var/lib/mysql
+      - ./database1-init:/docker-entrypoint-initdb.d
     networks:
       - webnet
     ports:
@@ -59,6 +60,7 @@ services:
       MYSQL_PASSWORD: your_database_password
     volumes:
       - db2-data:/var/lib/mysql
+      - ./database2-init:/docker-entrypoint-initdb.d
     networks:
       - webnet
     ports:
@@ -74,6 +76,7 @@ services:
       MYSQL_PASSWORD: your_database_password
     volumes:
       - db3-data:/var/lib/mysql
+      - ./database3-init:/docker-entrypoint-initdb.d
     networks:
       - webnet
     ports:
@@ -81,16 +84,16 @@ services:
 
   maxscale:
     image: mariadb/maxscale:latest
+    build:
+      context: ./maxscale
     ports:
-      - "3310:3306"  # MaxScale service port mapping
-    volumes:
-      - ./maxscale.cnf:/etc/maxscale.cnf  # Configuration for MaxScale
+      - "3310:3306"
     networks:
       - webnet
     depends_on:
       - database1
       - database2
-      - database3  # Ensure databases start before MaxScale
+      - database3
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -102,7 +105,7 @@ services:
       - KEYCLOAK_ADMIN_PASSWORD=admin
     command: ["start-dev"]
     ports:
-      - "8081:8080"  # Keycloak service port mapping
+      - "8081:8080"
     volumes:
       - ./keycloak-data:/opt/keycloak/data
     networks:

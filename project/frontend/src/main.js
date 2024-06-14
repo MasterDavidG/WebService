@@ -2,7 +2,7 @@ import Keycloak from 'keycloak-js';
 
 // Конфигуриране на Keycloak
 const keycloak = Keycloak({
-  url: 'http://localhost:8080/auth',
+  url: 'http://localhost:8081/auth',
   realm: 'myrealm',
   clientId: 'frontend-client'
 });
